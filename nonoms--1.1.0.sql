@@ -304,13 +304,13 @@ CREATE OR REPLACE FUNCTION as_understanding(
         author TEXT,
         year INT
     )
-    RETURNS integer[]
+    RETURNS TEXT
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
    
 BEGIN
-    RETURN name || ': iso. ' || author || ': ' || year
+    RETURN name || ': iso. ' || author || ': ' || year;
 END;
 $BODY$;-- This script checks to see if a given split is possible to perform
 -- It checks to see if all children of the parent are in the outputs,
@@ -894,16 +894,16 @@ DECLARE
 BEGIN
     -- Check to see if species and genus are present
 
-    SELECT COUNT(*) FROM @extschem@.rank WHERE name = "genus" INTO presence_check;
+    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'genus' INTO presence_check;
 
     IF presence_check != 1 THEN
-        RAISE EXCEPTION('Genus table not found/not unique');
+        RAISE EXCEPTION 'Genus table not found/not unique';
     END IF;
 
-    SELECT COUNT(*) FROM @extschem@.rank WHERE name = "species" INTO presence_check;
+    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'species' INTO presence_check;
     
     IF presence_check != 1 THEN
-        RAISE EXCEPTION('Species table not found/not unique');
+        RAISE EXCEPTION 'Species table not found/not unique';
     END IF;
 
     -- Tables are both present, not my problem now if they're malformed!
@@ -911,7 +911,7 @@ BEGIN
         SELECT s.id, g.name || ' ' || @extschema@.as_understanding(s.name, s.author, s.year) binomial
         FROM @extschema@.species s
         JOIN @extschema@.genus g on s.parent = g.id
-    )
+    );
 
 END;
 $BODY$;-- This wont work as it doesn't know where to assign it

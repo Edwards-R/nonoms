@@ -7,16 +7,16 @@ DECLARE
 BEGIN
     -- Check to see if species and genus are present
 
-    SELECT COUNT(*) FROM @extschem@.rank WHERE name = "genus" INTO presence_check;
+    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'genus' INTO presence_check;
 
     IF presence_check != 1 THEN
-        RAISE EXCEPTION('Genus table not found/not unique');
+        RAISE EXCEPTION 'Genus table not found/not unique';
     END IF;
 
-    SELECT COUNT(*) FROM @extschem@.rank WHERE name = "species" INTO presence_check;
+    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'species' INTO presence_check;
     
     IF presence_check != 1 THEN
-        RAISE EXCEPTION('Species table not found/not unique');
+        RAISE EXCEPTION 'Species table not found/not unique';
     END IF;
 
     -- Tables are both present, not my problem now if they're malformed!
@@ -24,7 +24,7 @@ BEGIN
         SELECT s.id, g.name || ' ' || @extschema@.as_understanding(s.name, s.author, s.year) binomial
         FROM @extschema@.species s
         JOIN @extschema@.genus g on s.parent = g.id
-    )
+    );
 
 END;
 $BODY$;

@@ -3,12 +3,12 @@ CREATE OR REPLACE FUNCTION as_understanding(
         author TEXT,
         year INT
     )
-    RETURNS integer[]
+    RETURNS TEXT
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
    
 BEGIN
-    RETURN name || ': iso. ' || author || ': ' || year
+    RETURN name || ': iso. ' || author || ': ' || year;
 END;
 $BODY$;
