@@ -9,11 +9,11 @@
 
 ## Arguments
 
-## scheme_name
+### scheme_name
 The name of the scheme. Used to personalise/constraint the capstone so that multiple systems can talk to each other without conflict
 
 ## scheme_year
-The year of creation of the scheme. Used to personalise/constraint the capstone so that multiple systems can talk to each other without conflict
+The# year of creation of the scheme. Used to personalise/constraint the capstone so that multiple systems can talk to each other without conflict
 
 ### override
 Override creation warnings e.g. intialising inside of an already populated schema. Defaults to false.
