@@ -14,3 +14,4 @@ THis document lists things that need to be done before any issue tracking gets i
 
 - [ ] It is possible to enter capital letters and numbers into `rank.name`, which will break things. Add a trigger to enforce lower case alphabetic only.
 - [ ] Minor ranks
+- [ ] Make it so that ranks get the PK/FK constraint auto-added
