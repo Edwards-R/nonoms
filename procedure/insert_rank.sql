@@ -115,5 +115,14 @@ EXECUTE
     )
 ;
 
+-- Add indexes
+EXECUTE
+    format('
+        CREATE INDEX id ON @extschema@.%I(id);
+        CREATE INDEX parent ON @extschema@.%I(parent);
+        CREATE INDEX subject ON @extschema@.%I_composition(subject);
+        CREATE INDEX component ON @extschema@.%I_composition(component);
+    ')
+
 END;
 $BODY$;
