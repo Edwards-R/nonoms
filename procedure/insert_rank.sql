@@ -122,7 +122,13 @@ EXECUTE
         CREATE INDEX parent ON @extschema@.%I(parent);
         CREATE INDEX subject ON @extschema@.%I_composition(subject);
         CREATE INDEX component ON @extschema@.%I_composition(component);
-    ')
+        ',
+        rank_name,
+        rank_name,
+        rank_name,
+        rank_name
+    )
+;
 
 END;
 $BODY$;
