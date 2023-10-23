@@ -2,53 +2,18 @@ CREATE TYPE split_result AS
 (
 	name text,
 	children integer[]
-);CREATE OR REPLACE FUNCTION select_level(
-	    level_id integer
+);CREATE OR REPLACE FUNCTION as_understanding(
+        name TEXT,
+        author TEXT,
+        year INT
     )
-    RETURNS record
+    RETURNS TEXT
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-    result RECORD;
+   
 BEGIN
-    SELECT * FROM @extschema@.rank WHERE id = level_id INTO result;
-    IF result.id IS NULL THEN
-        result = null;
-    END IF;
-    RETURN result;
-END;
-$BODY$;CREATE OR REPLACE FUNCTION make_aggregate(
-        level_id integer,
-        source_id integer,
-        author text,
-        year integer
-    )
-    RETURNS integer
-    LANGUAGE 'plpgsql'
-AS $BODY$
-DECLARE
-    level RECORD;
-    source RECORD;
-    agg_id INT;
-BEGIN
-    -- Get the level details
-    level = @extschema@.select_level(level_id);
-    -- Get the source details
-    EXECUTE format(
-        'SELECT * FROM @extschema@.%I WHERE id = $1',
-        level.name
-    )
-    USING source_id
-    INTO source;
-    --Make the aggregate
-    EXECUTE format(
-        'INSERT INTO @extschema@.%I (name, author, year, parent) VALUES ($1, $2, $3, $4) RETURNING id',
-        level.name
-    )
-    USING source.name || ' agg', author, year, source.parent
-    INTO agg_id;
-
-    RETURN agg_id;
+    RETURN name || ': iso. ' || author || ': ' || year;
 END;
 $BODY$;CREATE OR REPLACE FUNCTION create_multiple_current_understandings(
         level_id integer,
@@ -115,48 +80,6 @@ BEGIN
 
     -- Return the array
     return c;
-END;
-$BODY$;CREATE OR REPLACE FUNCTION select_parent_level(
-	    level_id integer
-    )
-    RETURNS record
-    LANGUAGE 'plpgsql'
-AS $BODY$
-DECLARE
-    result RECORD;
-BEGIN
-    SELECT t2.*
-    FROM @extschema@.rank t
-    JOIN @extschema@.rank t2 on t.major_parent = t2.id
-    WHERE t.id = level_id
-    INTO result;
-    
-    IF result.id IS NULL THEN
-        result = null;
-    END IF;
-    RETURN result;
-END;
-$BODY$;CREATE OR REPLACE FUNCTION extract_split_ids(
-	    destinations @extschema@.split_result[]
-    )
-    RETURNS TABLE(
-        id integer
-    ) 
-    LANGUAGE 'plpgsql'
-AS $BODY$
-BEGIN
-    RETURN QUERY EXECUTE format(
-        'SELECT 
-            unnest((y.x).children) as destination
-        FROM (
-            SELECT UNNEST(
-                $1::@extschema@.split_result[]
-            )
-            as x
-        ) as y'
-    )
-    USING destinations;
-
 END;
 $BODY$;CREATE OR REPLACE FUNCTION create_understanding(
         level_id integer,
@@ -232,24 +155,27 @@ BEGIN
 
     RETURN c;
 END;
-$BODY$;CREATE OR REPLACE FUNCTION is_schema_empty(
+$BODY$;CREATE OR REPLACE FUNCTION extract_split_ids(
+	    destinations @extschema@.split_result[]
     )
-    RETURNS BOOLEAN
+    RETURNS TABLE(
+        id integer
+    ) 
     LANGUAGE 'plpgsql'
 AS $BODY$
-DECLARE
-    num_tables INT;
 BEGIN
-    num_tables=0;
-    SELECT count(*) FROM information_schema.tables 
-    WHERE table_schema = '@extschema@' INTO num_tables;
+    RETURN QUERY EXECUTE format(
+        'SELECT 
+            unnest((y.x).children) as destination
+        FROM (
+            SELECT UNNEST(
+                $1::@extschema@.split_result[]
+            )
+            as x
+        ) as y'
+    )
+    USING destinations;
 
-    IF num_tables>0 THEN
-        return FALSE;
-    END IF;
-
-    -- Finally, all checks passed
-    RETURN TRUE;
 END;
 $BODY$;CREATE OR REPLACE FUNCTION fetch_valid_children(
         level_id integer,
@@ -283,6 +209,58 @@ BEGIN
     USING target_understanding
     ;
 END;
+$BODY$;CREATE OR REPLACE FUNCTION is_schema_empty(
+    )
+    RETURNS BOOLEAN
+    LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    num_tables INT;
+BEGIN
+    num_tables=0;
+    SELECT count(*) FROM information_schema.tables 
+    WHERE table_schema = '@extschema@' INTO num_tables;
+
+    IF num_tables>0 THEN
+        return FALSE;
+    END IF;
+
+    -- Finally, all checks passed
+    RETURN TRUE;
+END;
+$BODY$;CREATE OR REPLACE FUNCTION make_aggregate(
+        level_id integer,
+        source_id integer,
+        author text,
+        year integer
+    )
+    RETURNS integer
+    LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    level RECORD;
+    source RECORD;
+    agg_id INT;
+BEGIN
+    -- Get the level details
+    level = @extschema@.select_level(level_id);
+    -- Get the source details
+    EXECUTE format(
+        'SELECT * FROM @extschema@.%I WHERE id = $1',
+        level.name
+    )
+    USING source_id
+    INTO source;
+    --Make the aggregate
+    EXECUTE format(
+        'INSERT INTO @extschema@.%I (name, author, year, parent) VALUES ($1, $2, $3, $4) RETURNING id',
+        level.name
+    )
+    USING source.name || ' agg', author, year, source.parent
+    INTO agg_id;
+
+    RETURN agg_id;
+END;
 $BODY$;CREATE OR REPLACE FUNCTION select_child_level(
 	    level_id integer
     )
@@ -299,18 +277,40 @@ BEGIN
     RETURN result;
 END;
 $BODY$;
-CREATE OR REPLACE FUNCTION as_understanding(
-        name TEXT,
-        author TEXT,
-        year INT
+CREATE OR REPLACE FUNCTION select_level(
+	    level_id integer
     )
-    RETURNS TEXT
+    RETURNS record
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-   
+    result RECORD;
 BEGIN
-    RETURN name || ': iso. ' || author || ': ' || year;
+    SELECT * FROM @extschema@.rank WHERE id = level_id INTO result;
+    IF result.id IS NULL THEN
+        result = null;
+    END IF;
+    RETURN result;
+END;
+$BODY$;CREATE OR REPLACE FUNCTION select_parent_level(
+	    level_id integer
+    )
+    RETURNS record
+    LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    result RECORD;
+BEGIN
+    SELECT t2.*
+    FROM @extschema@.rank t
+    JOIN @extschema@.rank t2 on t.major_parent = t2.id
+    WHERE t.id = level_id
+    INTO result;
+    
+    IF result.id IS NULL THEN
+        result = null;
+    END IF;
+    RETURN result;
 END;
 $BODY$;-- This script checks to see if a given split is possible to perform
 -- It checks to see if all children of the parent are in the outputs,
@@ -375,74 +375,63 @@ BEGIN
     -- The end is reached, it passes!
     RETURN TRUE;
 END;
-$BODY$;CREATE OR REPLACE PROCEDURE merge_understandings(
-        IN level_id integer,
-        IN inputs integer[],
-        IN name text,
-        IN author text,
-        IN year integer
-    )
+$BODY$;-- This procedure assumes the existence of 'genus' and 'species' rank tables. It *WILL NOT WORK* without them
+CREATE OR REPLACE PROCEDURE create_binomial_view()
 LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-	level RECORD;
-	parent INT;
-	c INT;
-	_elem INT; -- Used in for loop
+    presence_check INT;
 BEGIN
+    -- Check to see if species and genus are present
 
--- Start by fetching the name of the rank
-level = @extschema@.select_level(level_id);
+    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'genus' INTO presence_check;
 
--- Check that the inputs have the same parent
-EXECUTE
-	format(
-		'SELECT COUNT(distinct(parent)) FROM @extschema@.%I WHERE id = ANY ($1)',
-		level.name
-	)
-	into c
-	USING inputs
-;
+    IF presence_check != 1 THEN
+        RAISE EXCEPTION 'Genus table not found/not unique';
+    END IF;
 
-IF (c !=1) THEN
-	RAISE EXCEPTION 'Inputs must belong to the same parent taxon';
-END IF;
+    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'species' INTO presence_check;
+    
+    IF presence_check != 1 THEN
+        RAISE EXCEPTION 'Species table not found/not unique';
+    END IF;
 
--- Level exists, now check that all inputs are current and not synonyms
-EXECUTE
-	format('SELECT COUNT(*) FROM @extschema@.%I WHERE id != current AND id = ANY ($1)', level.name)
-	INTO c
-	USING inputs
-;
+    -- Tables are both present, not my problem now if they're malformed!
+    CREATE VIEW @extschema@.binomial AS (
+        SELECT s.id, s.current, g.name || ' ' || @extschema@.as_understanding(s.name, s.author, s.year) binomial
+        FROM @extschema@.species s
+        JOIN @extschema@.genus g on s.parent = g.id
+    );
 
--- If there's a synonym, stop
-IF (c > 0) THEN
-	RAISE EXCEPTION 'Inputs may not contain synonyms';
-END IF;
+END;
+$BODY$;CREATE OR REPLACE PROCEDURE create_rank_table(
+    )
+    LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
 
--- Pre-checks completed, make the new entity and store the id in c
-
--- Start by fetching the parent
-EXECUTE format('SELECT DISTINCT(parent) FROM @extschema@.%I WHERE id = ANY ($1)', level.name)
-INTO parent
-USING inputs;
-
--- Now create
-SELECT @extschema@.create_understanding(level_id, parent, name, author, year, null) INTO c;
-
--- Update the old to redirect to the new
-EXECUTE
-	format('UPDATE @extschema@.%I SET current = $1 WHERE current = ANY ($2)', level.name)
-	USING c, inputs
-;
-
--- Push the current children of the inputs into the new taxa
-
-FOREACH _elem IN ARRAY inputs
-LOOP 
-   	CALL @extschema@.update_children(level_id, _elem, c);
-END LOOP;
-
+BEGIN
+CREATE TABLE IF NOT EXISTS @extschema@.rank
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    name text COLLATE pg_catalog."default" NOT NULL,
+    major_parent integer NOT NULL,
+    direct_parent integer NOT NULL,
+    display_name text COLLATE pg_catalog."default" NOT NULL,
+    is_major boolean NOT NULL,
+    CONSTRAINT rank_pkey PRIMARY KEY (id),
+    CONSTRAINT rank_name_key UNIQUE (name),
+    CONSTRAINT direct_parent FOREIGN KEY (direct_parent)
+        REFERENCES @extschema@.rank (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT major_parent FOREIGN KEY (major_parent)
+        REFERENCES @extschema@.rank (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        DEFERRABLE INITIALLY DEFERRED
+);
 END;
 $BODY$;-- Designed to run in a freshly created schema
 CREATE OR REPLACE PROCEDURE init_nonoms(
@@ -609,35 +598,107 @@ EXECUTE
     )
 ;
 
+-- Add indexes
+EXECUTE
+    format('
+        CREATE INDEX id ON @extschema@.%I(id);
+        CREATE INDEX parent ON @extschema@.%I(parent);
+        CREATE INDEX subject ON @extschema@.%I_composition(subject);
+        CREATE INDEX component ON @extschema@.%I_composition(component);
+        ',
+        rank_name,
+        rank_name,
+        rank_name,
+        rank_name
+    )
+;
+
 END;
-$BODY$;CREATE OR REPLACE PROCEDURE create_rank_table(
+$BODY$;-- Just a wrapper around the function to bring creation in line with merge/split
+-- Also used to make a clean distinction between creating as current or synonym without the user needing to understand what a NULL is
+CREATE OR REPLACE PROCEDURE insert_synonym_understanding(
+        IN level_id INT,
+        IN parent_id INT,
+        IN name TEXT,
+        IN author TEXT,
+        IN year INT,
+        IN current INT
     )
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
-
+    
 BEGIN
-CREATE TABLE IF NOT EXISTS @extschema@.rank
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name text COLLATE pg_catalog."default" NOT NULL,
-    major_parent integer NOT NULL,
-    direct_parent integer NOT NULL,
-    display_name text COLLATE pg_catalog."default" NOT NULL,
-    is_major boolean NOT NULL,
-    CONSTRAINT rank_pkey PRIMARY KEY (id),
-    CONSTRAINT rank_name_key UNIQUE (name),
-    CONSTRAINT direct_parent FOREIGN KEY (direct_parent)
-        REFERENCES @extschema@.rank (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT major_parent FOREIGN KEY (major_parent)
-        REFERENCES @extschema@.rank (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-        DEFERRABLE INITIALLY DEFERRED
-);
+    PERFORM @extschema@.create_understanding(level_id, parent_id, name, author, year, current); 
+END;
+$BODY$;CREATE OR REPLACE PROCEDURE merge_understandings(
+        IN level_id integer,
+        IN inputs integer[],
+        IN name text,
+        IN author text,
+        IN year integer
+    )
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+	level RECORD;
+	parent INT;
+	c INT;
+	_elem INT; -- Used in for loop
+BEGIN
+
+-- Start by fetching the name of the rank
+level = @extschema@.select_level(level_id);
+
+-- Check that the inputs have the same parent
+EXECUTE
+	format(
+		'SELECT COUNT(distinct(parent)) FROM @extschema@.%I WHERE id = ANY ($1)',
+		level.name
+	)
+	into c
+	USING inputs
+;
+
+IF (c !=1) THEN
+	RAISE EXCEPTION 'Inputs must belong to the same parent taxon';
+END IF;
+
+-- Level exists, now check that all inputs are current and not synonyms
+EXECUTE
+	format('SELECT COUNT(*) FROM @extschema@.%I WHERE id != current AND id = ANY ($1)', level.name)
+	INTO c
+	USING inputs
+;
+
+-- If there's a synonym, stop
+IF (c > 0) THEN
+	RAISE EXCEPTION 'Inputs may not contain synonyms';
+END IF;
+
+-- Pre-checks completed, make the new entity and store the id in c
+
+-- Start by fetching the parent
+EXECUTE format('SELECT DISTINCT(parent) FROM @extschema@.%I WHERE id = ANY ($1)', level.name)
+INTO parent
+USING inputs;
+
+-- Now create
+SELECT @extschema@.create_understanding(level_id, parent, name, author, year, null) INTO c;
+
+-- Update the old to redirect to the new
+EXECUTE
+	format('UPDATE @extschema@.%I SET current = $1 WHERE current = ANY ($2)', level.name)
+	USING c, inputs
+;
+
+-- Push the current children of the inputs into the new taxa
+
+FOREACH _elem IN ARRAY inputs
+LOOP 
+   	CALL @extschema@.update_children(level_id, _elem, c);
+END LOOP;
+
 END;
 $BODY$;CREATE OR REPLACE PROCEDURE split_understanding(
         IN level_id integer,
@@ -791,23 +852,6 @@ BEGIN
     
 
 END;
-$BODY$;-- Just a wrapper around the function to bring creation in line with merge/split
--- Also used to make a clean distinction between creating as current or synonym without the user needing to understand what a NULL is
-CREATE OR REPLACE PROCEDURE insert_synonym_understanding(
-        IN level_id INT,
-        IN parent_id INT,
-        IN name TEXT,
-        IN author TEXT,
-        IN year INT,
-        IN current INT
-    )
-    LANGUAGE 'plpgsql'
-AS $BODY$
-DECLARE
-    
-BEGIN
-    PERFORM @extschema@.create_understanding(level_id, parent_id, name, author, year, current); 
-END;
 $BODY$;CREATE OR REPLACE PROCEDURE update_children(
         IN level_id integer,
         IN input integer,
@@ -883,35 +927,6 @@ BEGIN
         CALL @extschema@.update_children(child_level.id, f.id, c);
 
     END LOOP;
-
-END;
-$BODY$;-- This procedure assumes the existence of 'genus' and 'species' rank tables. It *WILL NOT WORK* without them
-CREATE OR REPLACE PROCEDURE create_binomial_view()
-LANGUAGE 'plpgsql'
-AS $BODY$
-DECLARE
-    presence_check INT;
-BEGIN
-    -- Check to see if species and genus are present
-
-    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'genus' INTO presence_check;
-
-    IF presence_check != 1 THEN
-        RAISE EXCEPTION 'Genus table not found/not unique';
-    END IF;
-
-    SELECT COUNT(*) FROM @extschema@.rank WHERE name = 'species' INTO presence_check;
-    
-    IF presence_check != 1 THEN
-        RAISE EXCEPTION 'Species table not found/not unique';
-    END IF;
-
-    -- Tables are both present, not my problem now if they're malformed!
-    CREATE VIEW @extschema@.binomial AS (
-        SELECT s.id, s.current, g.name || ' ' || @extschema@.as_understanding(s.name, s.author, s.year) binomial
-        FROM @extschema@.species s
-        JOIN @extschema@.genus g on s.parent = g.id
-    );
 
 END;
 $BODY$;-- This wont work as it doesn't know where to assign it
