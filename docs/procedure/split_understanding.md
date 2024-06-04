@@ -10,20 +10,13 @@
     )
 
 ## Arguments
-### level_id
-The id of the level that this operation takes place at
-
-### source
-The id of the understanding to split
-
-### author
-The author of the split
-
-### year
-The year of the split
-
-### destinations
-The destinations of the split, as well as the assignment of where all the current children of the source end up
+| Name         | Type         | Description                                                                                                      |
+| ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| level_id     | int          | The id of the level that this operation takes place at                                                           |
+| source       | int          | The id of the understanding to split                                                                             |
+| author       | text         | The author of the split                                                                                          |
+| year         | int          | The year of the split                                                                                            |
+| destinations | split_result | The destinations of the split, as well as the assignment of where all the current children of the source end up. |
 
 ## Explanation
 An all-in-one function to handle the splitting of an understanding into multiple.

@@ -4,8 +4,8 @@
     
 
 ## Arguments
-
-### 
+| Name   | Type | Description                             |
+| ------ | ---- | --------------------------------------- |
 
 ## Explanation
 

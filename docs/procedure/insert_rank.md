@@ -9,22 +9,12 @@
     )
 
 ## Arguments
-
-### rank_name
-The name of the rank. Must be:
-- all lowercase
-- no numbers
-- no special characters
-- no accented characters
-
-### rank_parent
-The ID of the rank that is above this one
-
-### display_name
-The name to display as text when this rank is referenced by the system. Not restricted by the system.
-
-### capstone_override
-There's a specific function in this function to prevent the creation of a capstone. However, we need to create a capstone rank on init. Flagging this variable as TRUE will bypass the check and allow capstone creation without needing replicate functions.
+| Name              | Type    | Description                                                                                                                                                                                             |
+| ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| rank_name         | text    | The name of the rank. Must b, all lowercase,no numbers, no special characters, and no accented characters.                                                                                              |
+| rank_parent       | int     | The ID of the rank that is above this one.                                                                                                                                                              |
+| display_name      | text    | The name to display as text when this rank is referenced by the system. Not restricted by the system.                                                                                                   |
+| capstone_override | boolean | A specific override to prevent the creation of a capstone entry. Only ever overriden when creating the capstone itself, all other uses will leave this as false. If in doubt at all, leave it as false. |
 
 ## Explanation
 **Important! Read first!**
