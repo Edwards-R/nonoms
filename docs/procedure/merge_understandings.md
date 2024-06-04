@@ -10,20 +10,14 @@
     )
 
 ## Arguments
-### level_id
-The id of the level that this operation takes place at
 
-### inputs
-The id of the understandings to be merged
-
-### name
-The name of the new understanding to be created
-
-### author
-The author of the merge
-
-### year
-The year of the merge
+| Name     | Type  | Description                                            |
+| -------- | ----- | ------------------------------------------------------ |
+| level_id | int   | The id of the level that this operation takes place at |
+| inputs   | int[] | The ids of the understandings to be merged             |
+| name     | text  | The name of the new understanding to be created        |
+| author   | text  | The author of the merge                                |
+| year     | int   | The year of the merge                                  |
 
 ## Explanation
 An all-in-one function to handle merging multiple understandings into one.
