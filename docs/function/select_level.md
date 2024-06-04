@@ -7,9 +7,9 @@
     RETURNS record
 
 ## Arguments
-
-### level_id
-The level id of the level to return the details of
+| Name     | Type | Description                                        |
+| -------- | ---- | -------------------------------------------------- |
+| level_id | int  | The level id of the level to return the details of |
 
 ## Returns
 A record from the `levels` table

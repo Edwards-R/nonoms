@@ -10,18 +10,12 @@
     RETURNS integer
 
 ## Arguments
-
-### level_id
-The id of the level that this function is operating at
-
-### source_id
-The target understanding to have an aggregate understanding made of them
-
-### author
-The author's name for the aggregate understanding
-
-### year
-The year of publiction of the aggregate understanding
+| Name      | Type | Description                                                              |
+| --------- | ---- | ------------------------------------------------------------------------ |
+| level_id  | int  | The id of the level that this function is operating at                   |
+| source_id | int  | The target understanding to have an aggregate understanding made of them |
+| author    | text | The author's name for the aggregate understanding                        |
+| year      | int  | The year of publiction of the aggregate understanding                    |
 
 ## Returns
 The id of the newly created understanding
