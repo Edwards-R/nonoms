@@ -10,11 +10,11 @@
 
 ## Arguments
 
-### name
-The name of the understanding to format
-
-### name
-The name of the understanding to format
+| Name   | Description                             |
+| ------ | --------------------------------------- |
+| name   | The name of the Understanding to format |
+| author | The author for the Understanding        |
+| year   | The year of the Understanding           |
 
 ## Returns
 A iso. formatted understanding in the form of `name`: iso. `author`: `year`
