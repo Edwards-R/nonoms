@@ -7,17 +7,14 @@
     RETURNS record
 
 ## Arguments
-
-### level_id
-
-The level id of the level to return the child of
+| Name     | Type | Description                                      |
+| -------- | ---- | ------------------------------------------------ |
+| level_id | int  | The level id of the level to return the child of |
 
 ## Returns
-
 A record from the `levels` table
 
 ## Explanation
-
 Used as a shorthand abstraction for querying the `levels` table to find the child of a given level. Returns `null` if the current level is the lowest.
 
 ## Example

@@ -9,7 +9,6 @@
     RETURNS TEXT
 
 ## Arguments
-
 | Name   | Type | Description                             |
 | ------ | ---- | --------------------------------------- |
 | name   | text | The name of the Understanding to format |
