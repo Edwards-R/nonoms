@@ -11,21 +11,13 @@
     RETURNS integer[]
 
 ## Arguments
-
-### level_id
-The id of the level to create the new understanding in
-
-### parent_id
-The id of the understanding that this new understanding should be created under
-
-### name
-The array of names of the new understandings
-
-### author
-The author of the new understanding. This will be applied to all created understandings
-
-### year
-The year of declaration of this new understanding. This will be applied to all created understandings
+| Name      | Type   | Description                                                                                           |
+| --------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| level_id  | int    | The id of the level to create the new understanding in                                                |
+| parent_id | int    | The id of the understanding that this new understanding should be created under                       |
+| name      | text[] | The array of names of the new understandings                                                          |
+| author    | text   | The author of the new understanding. This will be applied to all created understandings               |
+| year      | int    | The year of declaration of this new understanding. This will be applied to all created understandings |
 
 ## Returns
 The ids of the newly created understandings
