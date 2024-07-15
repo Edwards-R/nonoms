@@ -31,4 +31,15 @@ An all-in-one function to handle the splitting of an understanding into multiple
             ('part_one'::text, '{4}'),
             ('part_two'::text, '{5}')
         ]::nomenclature.split_result[]
-    )
+    );
+---
+    CALL nomenclature.split_understanding(
+        5,
+        428,
+        'Rosa',
+        2024,
+        ARRAY[
+            ('nitidulus'::text, '{}'),
+            ('britannicorum'::text, '{}')
+        ]::nomenclature.split_result[]
+    );
