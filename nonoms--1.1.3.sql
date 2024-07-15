@@ -797,6 +797,7 @@ BEGIN
      * The trick is then working out how to run update_children on them
     */
 
+    
     EXECUTE format(
         'WITH inserted AS (
             INSERT INTO @extschema@.%I (name, author, year, parent)
@@ -810,10 +811,18 @@ BEGIN
             RETURNING id
         )
         SELECT array_agg(id) FROM inserted;',
-        child_level.name, child_level.name, author, year
+        child_level.name, child_level.name
     )
-    USING destinations, destination_understandings
+    USING destinations, destination_understandings, author, year
     INTO created_children;
+
+    -- Next, make the composition for all that we just created
+    EXECUTE FORMAT(
+        'INSERT INTO @extschema@.%I_composition (subject, component)
+        SELECT unnest($1), unnest($1)',
+        child_level.name
+    )
+    USING created_children;
 
     -- Now we need to point the old understandings to their new ones
     -- Start by doing a select that gets the old understanding and the new one
@@ -828,7 +837,7 @@ BEGIN
         )
         USING understanding.source, understanding.destination;
     END LOOP;
-
+    
     /*
      * Children are now created in the same order that extracting the children from destinations are
      * This means it is possible to run update_children using the table of results

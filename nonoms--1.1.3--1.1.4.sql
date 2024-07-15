@@ -146,7 +146,7 @@ BEGIN
         RETURN;
     END IF;
 
-    -- There's a granchild level, so we're not quite done yet
+    -- There's a grandchild level, so we're not quite done yet
     -- We can use the same loop as before to push into update_children though, so it's fast
 
     FOR understanding IN
