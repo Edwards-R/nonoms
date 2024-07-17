@@ -1,4 +1,4 @@
-DROP FUNCTION @extschema@.create_multiple_understandings;
+DROP FUNCTION IF EXISTS @extschema@.create_multiple_current_understandings;
 
 CREATE OR REPLACE PROCEDURE split_understanding(
         IN level_id integer,

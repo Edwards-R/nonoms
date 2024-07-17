@@ -12,7 +12,6 @@ DECLARE
     child_level RECORD;
     subject RECORD;
     aggregate_id INT;
-    destination_understandings RECORD ARRAY;
 BEGIN
     -- Get the level details
     level = @extschema@.select_level(level_id);
@@ -67,6 +66,7 @@ BEGIN
             year,
             NULL -- Current Understanding, so current = null
         ) as id, children
+        FROM unnested
     );
 
     -- Create the aggregate
@@ -74,7 +74,7 @@ BEGIN
 
     -- Assign the destination understandings as components of the aggregate
     EXECUTE format(
-        'INSERT INTO @extschema@.%I_composition (subject, component) VALUES ($1, SELECT id FROM destination_table)',
+        'INSERT INTO nomenclature.%I_composition (subject, component) SELECT $1, id FROM destination_table',
         level.name
     )
     USING aggregate_id;
@@ -106,25 +106,26 @@ BEGIN
         ),
 
         new_children AS(
-            SELECT old_understanding, @extschema@.create_understanding(
-                child_level.id,
+            SELECT child AS old_understanding, @extschema@.create_understanding(
+                $3,
                 parent_id,
-                ns.name
+                ns.name,
                 $1,
                 $2,
-                year
+                NULL
             ) new_understanding
             FROM destination_children
-            JOIN @extschema@.%I ns ON destination_child.child = ns.id
+            JOIN @extschema@.%I ns ON destination_children.child = ns.id
         )
 
         UPDATE @extschema@.%I
         SET current = new_understanding
         FROM new_children
-        WHERE id = old_understanding
-    ', child_level.name)
-    USING author, year;
+        WHERE current = old_understanding
+    ', child_level.name, child_level.name)
+    USING author, year, child_level.id;
 
+    -- Modify the above query to output a table of the old_id and the new_id that can be passed to update_children (which is recursive)
     -- Run update_children?
 END;
 $BODY$;
