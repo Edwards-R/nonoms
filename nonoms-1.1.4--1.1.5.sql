@@ -1,3 +1,5 @@
+DROP FUNCTION @extschema@.create_multiple_understandings;
+
 CREATE OR REPLACE PROCEDURE split_understanding(
         IN level_id integer,
         IN source integer,
