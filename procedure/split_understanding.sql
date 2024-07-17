@@ -94,8 +94,6 @@ BEGIN
     /* 
      * There are children to be created, and they have been checked already
      * Key here is that destination_understandings is created in the same order as destinations
-     * This means that we can use unnest on both arrays to link the destination children array with the destination understanding
-     * The trick is then working out how to run update_children on them
     */
 
     -- We have a table of the id of each destination, plus the ids of the children that belong in it
@@ -127,5 +125,6 @@ BEGIN
     ', child_level.name)
     USING author, year;
 
+    -- Run update_children?
 END;
 $BODY$;
