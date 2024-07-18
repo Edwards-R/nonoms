@@ -1,7 +1,7 @@
 # Run `make -B` to build, then `make install` to install
 
 EXTENSION = nonoms
-EXTVERSION = 1.1.5
+EXTVERSION = 1.1.6
 
 # This looks for a target. If it can't find it, it makes it
 DATA = $(EXTENSION)--$(EXTVERSION).sql

@@ -14,7 +14,6 @@ DECLARE
     child_level RECORD;
     subject RECORD;
     aggregate_id INT;
-    destination_understandings RECORD ARRAY;
 BEGIN
     -- Get the level details
     level = @extschema@.select_level(level_id);
@@ -69,6 +68,7 @@ BEGIN
             year,
             NULL -- Current Understanding, so current = null
         ) as id, children
+        FROM unnested
     );
 
     -- Create the aggregate
@@ -76,7 +76,7 @@ BEGIN
 
     -- Assign the destination understandings as components of the aggregate
     EXECUTE format(
-        'INSERT INTO @extschema@.%I_composition (subject, component) VALUES ($1, SELECT id FROM destination_table)',
+        'INSERT INTO nomenclature.%I_composition (subject, component) SELECT $1, id FROM destination_table',
         level.name
     )
     USING aggregate_id;
@@ -96,38 +96,58 @@ BEGIN
     /* 
      * There are children to be created, and they have been checked already
      * Key here is that destination_understandings is created in the same order as destinations
-     * This means that we can use unnest on both arrays to link the destination children array with the destination understanding
-     * The trick is then working out how to run update_children on them
     */
 
     -- We have a table of the id of each destination, plus the ids of the children that belong in it
     -- Unnest that table to get a table of parent_id and details
 
     EXECUTE format('
+        CREATE TEMPORARY TABLE children AS
         WITH destination_children AS (
             SELECT id as parent_id, UNNEST(children) child
             FROM destination_table
         ),
 
         new_children AS(
-            SELECT old_understanding, @extschema@.create_understanding(
-                child_level.id,
+            SELECT child AS old_understanding, @extschema@.create_understanding(
+                $3,
                 parent_id,
-                ns.name
+                ns.name,
                 $1,
                 $2,
-                year
+                NULL
             ) new_understanding
             FROM destination_children
-            JOIN @extschema@.%I ns ON destination_child.child = ns.id
+            JOIN @extschema@.%I ns ON destination_children.child = ns.id
+        ),
+
+        update_command AS (
+            UPDATE @extschema@.%I
+            SET current = new_understanding
+            FROM new_children
+            WHERE current = old_understanding
         )
 
-        UPDATE @extschema@.%I
-        SET current = new_understanding
+        SELECT old_understanding, new_understanding
         FROM new_children
-        WHERE id = old_understanding
-    ', child_level.name)
-    USING author, year;
+    ', child_level.name, child_level.name)
+    USING author, year, child_level.id;
 
+    -- Modify the above query to output a table of the old_id and the new_id that can be passed to update_children (which is recursive)
+    -- Run update_children?
+
+    -- First, check if there's a grandchild level. If there isn't, exit, job done!
+    IF (@extschema@.select_child_level(child_level.id) IS NULL) THEN
+        RETURN;
+    END IF;
+
+    -- So there is a grandchild level. This means that we need to move valid grandchildren to the new
+    -- update_children is recursive
+    FOR understanding IN
+        SELECT old_understanding AS old, new_understanding AS new
+        FROM children
+    LOOP
+        CALL @extschema@.update_children(child_level.id, old, new);
+    END LOOP;
 END;
 $BODY$;
